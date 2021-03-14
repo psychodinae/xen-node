@@ -1,0 +1,26 @@
+{
+  "name": "xen-node",
+  "version": "1.0.0",
+  "description": "Interact with XenForo 2.x forums",
+  "main": "index.js",
+  "dependencies": {
+    "axios": "0.21.1",
+    "cheerio": "1.0.0-rc.5",
+    "node-fetch": "2.6.1 ",
+    "qs": "6.9.6",
+    "sqlite3": "^5.0.2"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/psychodinae/xen-node.git"
+  },
+  "author": "psychodinae/mellon_collie",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/psychodinae/xen-node/issues"
+  },
+  "homepage": "https://github.com/psychodinae/xen-node#readme"
+}
