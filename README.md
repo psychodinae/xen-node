@@ -22,7 +22,7 @@ Store your **logged Cookies** as JSON in a file or in your project enviroment va
 req.xenLogin("myusername", "mypass")
       .then((loggedCookies) => {
         console.log(JSON.stringify(loggedCookies));
-            // '["xf_user=234553%ubIUYBuysFSfgdgd_dgfdgSDF...
+            // '["xf_user=234553%ubIUYBuybiuyIU_v-SDFfg34...
       })
       .catch((err) => console.log(err));
 ```
@@ -49,6 +49,7 @@ Then using your previously saved cookies:
 ```
 
 **Short exemple:**
+
 however, do **not** log in to each request because the server will block it, instead save the cookies and reuse them as mentioned above:
 ```javascript
 const XenNode = require("xen-node");
