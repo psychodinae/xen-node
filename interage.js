@@ -37,24 +37,20 @@ Interage.prototype.xenLogin = function (login, password) {
         validateStatus: function (status) {
           return status == 303; // Resolve only if the status code is 303
         },
-      })
-        .then((response) => {
-          console.log("logged if 303:", response.status);
-          this.cookies = response.headers["set-cookie"];
-          return this.cookies;
-        })
-        .catch((error) => {
-          console.log("xenLoginError statuscode:", error);
-        });
+      }).then((response) => {
+        console.log("logged if 303:", response.status);
+        this.cookies = response.headers["set-cookie"];
+        return this.cookies;
+      });
     })
     .catch((error) => {
-      console.log(error);
+      console.log("xenLoginError", error);
     });
 };
 
 Interage.prototype.checkLogin = function (freshCookies) {
-  this.postData = {}
-  if (!Array.isArray(freshCookies)) freshCookies = this.cookies;  // if NOT param
+  this.postData = {};
+  if (!Array.isArray(freshCookies)) freshCookies = this.cookies;
   return this.axiosXen({
     method: "post",
     validateStatus: function (status) {
@@ -69,12 +65,11 @@ Interage.prototype.checkLogin = function (freshCookies) {
         let $ = cheerio.load(respo.data);
         let logged = $("#XF").attr("data-logged-in");
         this.postData._xfToken = $("input[name=_xfToken]").val();
-        return (logged === 'true');
+        return logged === "true";
       });
     })
     .catch((error) => {
-      console.log(console.log(error.response.status))
-      console.log('lol', error.response.headers);
+      console.log(console.log("checkLoginError", error));
     });
 };
 
@@ -87,46 +82,51 @@ function mergeCookies(c1, c2) {
 }
 
 Interage.prototype.makeRequest = function (url, data, log) {
-    return this.axiosXen(url, {
-      method: "post",
-      maxRedirects: 0,
-      data: qs.stringify(data),
-      validateStatus: function (status) {
-        if (status == 303) {
+  return this.axiosXen(url, {
+    method: "post",
+    maxRedirects: 0,
+    data: qs.stringify(data),
+    validateStatus: function (status) {
+      if (status == 303) {
         console.log(log);
-        return true // Resolve only if the status code is 303
-        }
-      },
-      headers: {
-        Cookie: this.cookies,
-      },
-    });
-  };
+        return true; // Resolve only if the status code is 303
+      }
+    },
+    headers: {
+      Cookie: this.cookies,
+    },
+  });
+};
 
 // forum endpoints:
 
 Interage.prototype.react = function (react_id, post_id) {
   this.postData.reaction_id = react_id;
-  let url = `index.php?posts/${post_id}/react`
-  let log = `[!] reacted on post: ${post_id}`
-  return this.makeRequest(url, this.postData, log)
+  let url = `index.php?posts/${post_id}/react`;
+  let log = `[!] reacted on post: ${post_id}`;
+  return this.makeRequest(url, this.postData, log);
 };
 
 Interage.prototype.post = function (text, thread) {
-  this.postData.message = text
-  let url = `index.php?threads/${thread}/add-reply`
-  let log = `[!] commented on thread: ${thread}`
-  return this.makeRequest(url, this.postData, log)
+  this.postData.message = text;
+  let url = `index.php?threads/${thread}/add-reply`;
+  let log = `[!] commented on thread: ${thread}`;
+  return this.makeRequest(url, this.postData, log);
 };
 
 Interage.prototype.editPost = function (text, post_id) {
-  this.postData.message = text
-  let url = `index.php?posts/${post_id}/edit`
-  let log = `[!] post edited: ${post_id}`
-  return this.makeRequest(url, this.postData, log)
+  this.postData.message = text;
+  let url = `index.php?posts/${post_id}/edit`;
+  let log = `[!] post edited: ${post_id}`;
+  return this.makeRequest(url, this.postData, log);
 };
 
-Interage.prototype.newThread = function (title, text, board_uri, prefix_id='0') {
+Interage.prototype.newThread = function (
+  title,
+  text,
+  board_uri,
+  prefix_id = "0"
+) {
   let data = {
     ...{
       title: title,
@@ -135,12 +135,17 @@ Interage.prototype.newThread = function (title, text, board_uri, prefix_id='0') 
     },
     ...this.postData,
   };
-  let url = `index.php?forums${board_uri}/post-thread`
-  let log = `[!] new thread on board: ${board_uri}`
-  return this.makeRequest(url, data, log)
+  let url = `index.php?forums${board_uri}/post-thread`;
+  let log = `[!] new thread on board: ${board_uri}`;
+  return this.makeRequest(url, data, log);
 };
 
-Interage.prototype.editThread = function (title, text, post_id, prefix_id='0') {
+Interage.prototype.editThread = function (
+  title,
+  text,
+  post_id,
+  prefix_id = "0"
+) {
   let data = {
     ...{
       title: title,
@@ -149,22 +154,22 @@ Interage.prototype.editThread = function (title, text, post_id, prefix_id='0') {
     },
     ...this.postData,
   };
-  let url = `index.php?posts/${post_id}/edit`
-  let log = `[!] thread edited: ${post_id}`
-  return this.makeRequest(url, data, log)
+  let url = `index.php?posts/${post_id}/edit`;
+  let log = `[!] thread edited: ${post_id}`;
+  return this.makeRequest(url, data, log);
 };
 
 Interage.prototype.privateMsg = function (title, text, nickList) {
-  let nickStr = nickList.join()
+  let nickStr = nickList.join();
   let data = {
     ...{
       title: title,
       message: text,
-      recipients: nickStr
+      recipients: nickStr,
     },
     ...this.postData,
   };
-  let url = `index.php?conversations/add`
-  let log = `[!] private message send to: ${nickStr}`
-  return this.makeRequest(url, data, log)
+  let url = `index.php?conversations/add`;
+  let log = `[!] private message send to: ${nickStr}`;
+  return this.makeRequest(url, data, log);
 };
