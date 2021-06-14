@@ -12,7 +12,7 @@ module.exports = Interage = function (url) {
     baseURL: url,
     headers: {
       "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.190 Safari/537.36",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36",
     },
   });
 };
@@ -79,9 +79,17 @@ function mergeCookies(c1, c2) {
     for (var idy in c2)
       if (c1[idx].startsWith(c2[idy].split("=")[0])) filtered.splice(idy, 1);
   return c1.concat(filtered);
-}
+};
 
-Interage.prototype.makeRequest = function (url, data, log) {
+Interage.prototype.getRequest = function (uri) {
+  return this.axiosXen(uri, {
+    headers: {
+      Cookie: this.cookies ,
+    },
+  });
+};
+
+Interage.prototype.postRequest = function (url, data, log) {
   return this.axiosXen(url, {
     method: "post",
     maxRedirects: 0,
@@ -104,21 +112,21 @@ Interage.prototype.react = function (react_id, post_id) {
   this.postData.reaction_id = react_id;
   let url = `index.php?posts/${post_id}/react`;
   let log = `[!] reacted on post: ${post_id}`;
-  return this.makeRequest(url, this.postData, log);
+  return this.postRequest(url, this.postData, log);
 };
 
 Interage.prototype.post = function (text, thread) {
   this.postData.message = text;
   let url = `index.php?threads/${thread}/add-reply`;
   let log = `[!] commented on thread: ${thread}`;
-  return this.makeRequest(url, this.postData, log);
+  return this.postRequest(url, this.postData, log);
 };
 
 Interage.prototype.editPost = function (text, post_id) {
   this.postData.message = text;
   let url = `index.php?posts/${post_id}/edit`;
   let log = `[!] post edited: ${post_id}`;
-  return this.makeRequest(url, this.postData, log);
+  return this.postRequest(url, this.postData, log);
 };
 
 Interage.prototype.newThread = function (
@@ -137,7 +145,7 @@ Interage.prototype.newThread = function (
   };
   let url = `index.php?forums${board_uri}/post-thread`;
   let log = `[!] new thread on board: ${board_uri}`;
-  return this.makeRequest(url, data, log);
+  return this.postRequest(url, data, log);
 };
 
 Interage.prototype.editThread = function (
@@ -156,7 +164,7 @@ Interage.prototype.editThread = function (
   };
   let url = `index.php?posts/${post_id}/edit`;
   let log = `[!] thread edited: ${post_id}`;
-  return this.makeRequest(url, data, log);
+  return this.postRequest(url, data, log);
 };
 
 Interage.prototype.privateMsg = function (title, text, nickList) {
@@ -171,5 +179,5 @@ Interage.prototype.privateMsg = function (title, text, nickList) {
   };
   let url = `index.php?conversations/add`;
   let log = `[!] private message send to: ${nickStr}`;
-  return this.makeRequest(url, data, log);
+  return this.postRequest(url, data, log);
 };
