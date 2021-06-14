@@ -48,6 +48,19 @@ Then using your previously saved cookies:
    });
 ```
 
+After logged in it is also possible to make **get** authenticated request to retrieve data.
+
+```javascript
+   req
+   .checkLogin(loggedCookies)
+   .then((isLogged) => {
+     console.log(isLogged) // true
+     req.getRequest("/conversations") // https://forum.some.com/conversations
+     .then((response) => console.log(response.data)) // html response from server.
+   })
+   .catch((xenNodeError) => console.log(xenNodeError))
+```
+
 **Short exemple:**
 
 however, do **not** log in to each request because the server will block it, instead save the cookies and reuse them as mentioned above:
