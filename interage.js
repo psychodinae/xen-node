@@ -23,29 +23,37 @@ Interage.prototype.xenLogin = function (login, password) {
     password: password,
     remember: "1",
   };
-  return this.axiosXen()
-    .then((resp) => {
-      let $ = cheerio.load(resp.data);
-      params._xfToken = $("input[name=_xfToken]").val();
-      return this.axiosXen("/index.php?login/login/", {
-        maxRedirects: 0,
-        method: "post",
-        headers: {
-          Cookie: resp.headers["set-cookie"] || [],
-        },
-        data: qs.stringify(params),
-        validateStatus: function (status) {
-          return status == 303; // Resolve only if the status code is 303
-        },
-      }).then((response) => {
-        console.log("logged if 303:", response.status);
-        this.cookies = response.headers["set-cookie"];
-        return this.cookies;
-      });
-    })
-    .catch((error) => {
-      console.log("xenLoginError", error);
+  return this.axiosXen().then((resp) => {
+    let $ = cheerio.load(resp.data);
+    params._xfToken = $("input[name=_xfToken]").val();
+    return this.axiosXen("/index.php?login/login/", {
+      maxRedirects: 0,
+      method: "post",
+      headers: {
+        Cookie: resp.headers["set-cookie"] || [],
+      },
+      data: qs.stringify(params),
+      validateStatus: function (status) {
+        return status == 303; // Resolve only if the status code is 303
+      },
+    }).then((response) => {
+      console.log("logged if 303:", response.status);
+      this.cookies = response.headers["set-cookie"];
+      return this.cookies;
     });
+  });
+};
+
+var notLoggedInError = function (axiosResponse) {
+  var error = new Error("not logged in.");
+  error.errno = -3010;
+  error.code = "NOTLOGGED";
+  error.hostname = axiosResponse.request.socket._host;
+  error.config = axiosResponse.config;
+  error.response = undefined;
+  error.isAxiosError = false;
+  error.isLogged = false;
+  return error;
 };
 
 Interage.prototype.checkLogin = function (freshCookies) {
@@ -56,21 +64,20 @@ Interage.prototype.checkLogin = function (freshCookies) {
     validateStatus: function (status) {
       return status <= 400; // misteriously the post request returns xf_csrf cookie but with 400 status code
     },
-  })
-    .then((resp) => {
-      this.cookies = mergeCookies(freshCookies, resp.headers["set-cookie"]);
-      return this.axiosXen({
-        headers: { Cookie: this.cookies },
-      }).then((respo) => {
-        let $ = cheerio.load(respo.data);
-        let logged = $("#XF").attr("data-logged-in");
-        this.postData._xfToken = $("input[name=_xfToken]").val();
-        return logged === "true";
-      });
-    })
-    .catch((error) => {
-      console.log(console.log("checkLoginError", error));
+  }).then((resp) => {
+    this.cookies = mergeCookies(freshCookies, resp.headers["set-cookie"]);
+    return this.axiosXen({
+      headers: { Cookie: this.cookies },
+    }).then((respo) => {
+      let $ = cheerio.load(respo.data);
+      let logged = $("#XF").attr("data-logged-in");
+      this.postData._xfToken = $("input[name=_xfToken]").val();
+      respo.isLogged = true;
+      return logged === "true"
+        ? respo
+        : Promise.reject(notLoggedInError(respo)); // reject Promise with custom error.
     });
+  });
 };
 
 function mergeCookies(c1, c2) {
@@ -79,12 +86,12 @@ function mergeCookies(c1, c2) {
     for (var idy in c2)
       if (c1[idx].startsWith(c2[idy].split("=")[0])) filtered.splice(idy, 1);
   return c1.concat(filtered);
-};
+}
 
 Interage.prototype.getRequest = function (uri) {
   return this.axiosXen(uri, {
     headers: {
-      Cookie: this.cookies ,
+      Cookie: this.cookies,
     },
   });
 };
