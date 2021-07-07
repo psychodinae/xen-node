@@ -35,11 +35,12 @@ When using then, you will receive the response as follows:`
 ```javascript
     req.xenLogin("myusername", "mypass", json = true) // json parameter is optional, default: false.
       .then((cookies) => {
+        console.log(cookies);
         // ["xf_user=234553%ubIUYBuybiuyIU_v-SDFfg34...
         // or json = true:
         // '["xf_user=234553%ubIUYBuybiuyIU_v-SDFfg34...
-      })
-      .catch((err) => console.log(err));
+    })
+    .catch((err) => console.log(err));
 ```
 
 #### Forum Requests
