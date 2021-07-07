@@ -1,5 +1,5 @@
 # xen-node
-Interact with XenForo 2.x forums, nodejs based on axios promise HTTP client
+Interact with XenForo 2.x forums, based on axios promise HTTP client.
 
 ## Installation
 
