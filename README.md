@@ -1,5 +1,5 @@
 # xen-node
-Interact with XenForo 2.x forums, nodejs flavor
+Interact with XenForo 2.x forums, nodejs based on axios promise HTTP client
 
 ## Installation
 
@@ -7,58 +7,111 @@ Interact with XenForo 2.x forums, nodejs flavor
     
 ## Usage
 
-First instantiate the object and pass the forum url in the constructor:
+First instantiate the object and pass the forum url:
 ```javascript
     const XenNode = require("xen-node");
 
     const url = "https://forum.some.com";
     const req = new XenNode(url);
 ```
+Passing optional settings:
+```javascript
+    const interage = new Interage("https://forum.some.com", {
+      verbose: console.log,
+      timeout: 5000,
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10...",
+        }
+      });
+```
 
 #### Login
-Store your **logged Cookies** as JSON in a file or in your project enviroment variables.
+method `xenLogin` by default returns an array with **logged in Cookies**, to return a JSON string set `json` parameter to `true` 
+in order to save to your environment variables or file.
+
+When using then, you will receive the response as follows:`
 
 ```javascript
-req.xenLogin("myusername", "mypass")
-      .then((loggedCookies) => {
-        console.log(JSON.stringify(loggedCookies));
-            // '["xf_user=234553%ubIUYBuybiuyIU_v-SDFfg34...
+    req.xenLogin("myusername", "mypass", json = true) // json parameter is optional, default: false.
+      .then((cookies) => {
+        // ["xf_user=234553%ubIUYBuybiuyIU_v-SDFfg34...
+        // or json = true:
+        // '["xf_user=234553%ubIUYBuybiuyIU_v-SDFfg34...
       })
       .catch((err) => console.log(err));
 ```
 
 #### Forum Requests
-Before sending any request to the forum use the check login functionto to test if the credentials are 
-valid and load the **CSRF token**.
+Before sending any request to the forum, use `checkLogin` method to set **cookies**, **CSRF token** and check if is **authenticated**.
+
+`checkLogin` method return a regular axios resolve/reject object with a custom bollean `loggedIn` parameter.
 
 Then using your previously saved cookies:
 
 ```javascript
    const loggedCookies = JSON.parse(mySavedCookies)
-
-   req.checkLogin(loggedCookies).then((resp) => {
-     console.log("logged", resp);
-     // Then:
-     req.react("1", "123456789"); // react_id / post_id
-     // req.post("hello", "571225")  // text message / thread_id
-     // req.editPost("edit my post now", '123456789') // text message / post_id
-     // req.newThread("hello again", "lol", '/some-board.14') title / message / board URI
-     // req.editThread("Ayy lmao", "peace", '1233456789') title / message / board URI
-     // req.privateMsg("tes", 'ting', ['myfriend']) title / message / friend_user_name
-   });
+   req.checkLogin(loggedCookies)
+     .then((resp) => {
+       resp.loggedIn; // true
+       resp.data; // axios data html response from server.
+       // your requests here
+   })
+   .catch((err) => console.log(err))
 ```
 
-After logged in it is also possible to make **get** authenticated request to retrieve data.
+If the `check Login` method resolves the user has been successfully logged in, then:
+
+```javascript
+   req.checkLogin(loggedCookies)
+     .then(() => 
+       // your requests here
+       req.react("1", "123456789"); // reactId, postId
+       // req.post("hello", "571225")  // text message, threadId
+       // req.editPost("edit my post now", '123456789') // text message, postId
+       // req.newThread("hello again", "lol", '/some-board.14') // title,  message, board relative url
+       // req.editThread("Ayy lmao", "peace", '1233456789') // title, message, board relative url
+       // req.privateMsg("tes", 'ting', ['myfriend']) // title, message, friend username
+       // req.replyPrivateMsg("yes", "12345") // text, messageId
+       // req.leavePrivateMsg("12345", true) // messageId, accept future message
+       // req.ignore("9876543") // memberId
+       // req.follow("9876543") // memberId
+       // req.profilePost("hello", "9876543") // text, memberId
+       // req.editProfilePost("ops...", "1234") // text, ProfilePostId
+       // req.deleteProfilePost("1234", "wathever") // ProfilePostId, reason
+       // req.bookMark("123456789", "nice", "stuff") // postId, message, labels
+       // req.signature("My awesome signature") // text
+   )
+   .catch((err) => console.log(err))
+```
+
+After log in you can do the `GET` authenticated request to retrieve data.
 
 ```javascript
    req
-   .checkLogin(loggedCookies)
-   .then((isLogged) => {
-     console.log(isLogged) // true
-     req.getRequest("/conversations") // https://forum.some.com/conversations
-     .then((response) => console.log(response.data)) // html response from server.
+     .checkLogin(loggedCookies)
+     .then(() => {
+       return req
+         .getRequest("/conversations") // equal to: https://forum.some.com/conversations
+         .then((response) => {
+           // do things with authenticated html response from server.
+           //...
+      })
    })
-   .catch((xenNodeError) => console.log(xenNodeError))
+   .catch((err) => console.log(err));
+```
+
+In case of login failure, promise reject and returns an error object with the `code: 'NOTAUTHENTICATED'` parameter:
+
+```javascript
+   req.checkLogin(loggedCookies)
+     .then(() => {
+       // return your requests here
+   })
+   .catch((err) => {
+     console.log(err.code)
+     // "NOTAUTHENTICATED"
+   })
 ```
 
 **Short exemple:**
@@ -71,9 +124,9 @@ const url = "https://forum.some.com";
 const req = new XenNode(url);
 
 req.xenLogin("myusername", "mypass")
-    .then((ck) => req.checkLogin(ck))
-    .then(() => req.post("hey dude", "571225")
-    ).catch((err) => console.log(err))
+  .then((ck) => req.checkLogin(ck))
+  .then(() => req.post("hey dude", "571225")
+).catch((err) => console.log(err))
 ```
 
 **Standard reaction_ids:**
@@ -86,4 +139,4 @@ req.xenLogin("myusername", "mypass")
 | 4 | Wow |
 | 5 | Sad |
 | 6 | Angry |
-| 7 | Thinking| 
+| 7 | Thinking|
