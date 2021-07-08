@@ -16,7 +16,7 @@ First instantiate the object and pass the forum url:
 ```
 Passing optional settings:
 ```javascript
-    const interage = new Interage("https://forum.some.com", {
+    const req = new Interage("https://forum.some.com", {
       verbose: console.log,
       timeout: 5000,
       headers: {
@@ -27,18 +27,19 @@ Passing optional settings:
 ```
 
 #### Login
-method `xenLogin` by default returns an array with **logged in Cookies**, to return a JSON string set `json` parameter to `true` 
+method `xenLogin` by default returns an array with **logged in cookies**, to return a JSON string set `json` parameter to `true` 
 in order to save to your environment variables or file.
 
 When using then, you will receive the response as follows:`
 
 ```javascript
-    req.xenLogin("myusername", "mypass", json = true) // json parameter is optional, default: false.
-      .then((cookies) => {
-        console.log(cookies);
-        // ["xf_user=234553%ubIUYBuybiuyIU_v-SDFfg34...
-        // or json = true:
-        // '["xf_user=234553%ubIUYBuybiuyIU_v-SDFfg34...
+    req.
+      xenLogin("myusername", "mypass", json = true) // json parameter is optional, default: false.
+        .then((cookies) => {
+          console.log(cookies);
+          // ["xf_user=234553%ubIUYBuybiuyIU_v-SDFfg34...
+          // or json = true:
+          // '["xf_user=234553%ubIUYBuybiuyIU_v-SDFfg34...
     })
     .catch((err) => console.log(err));
 ```
