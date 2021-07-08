@@ -11,7 +11,7 @@ const defaultOpt = {
   },
 };
 
-class XenNode {
+module.exports = class XenNode {
   /**
    * Interact with xenforo 2.x forums.
    * @constructor
@@ -95,9 +95,7 @@ class XenNode {
         this.postData._xfToken = $("input[name=_xfToken]").val();
         res.loggedIn = true;
         this.verbosity("[!] check login: true");
-        return logged === "true"
-          ? res
-          : Promise.reject(notLoggedInError(res)); // reject Promise with custom error.
+        return logged === "true" ? res : Promise.reject(notLoggedInError(res)); // reject Promise with custom error.
       });
     });
   }
@@ -365,7 +363,7 @@ class XenNode {
     const log = `[!] signature edited.`;
     return this.postRequest(uri, this.postData, log);
   }
-}
+};
 
 const mergeCookies = (c1, c2) => {
   let filtered = c2;
@@ -386,8 +384,4 @@ const notLoggedInError = (axiosResponse) => {
     loggedIn: false,
   };
   return { ...new Error("not logged in."), ...custom };
-};
-
-module.exports = function (url, options) {
-  return url ? new XenNode(url, options) : XenNode;
 };
