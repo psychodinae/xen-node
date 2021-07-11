@@ -96,8 +96,8 @@ After log in you can do the `GET` authenticated request to retrieve data.
        return req
          .getRequest("/conversations") // equal to: https://forum.some.com/conversations
          .then((response) => {
-           // do things with authenticated html response from server.
-           //...
+           // do things with authenticated axios response from server.
+           // console.log(response.data)
       })
    })
    .catch((err) => console.log(err));
