@@ -26,7 +26,7 @@ Passing optional settings:
       });
 ```
 
-All methods (excluding `xenLogin`) return a regular axios response/error promise.
+All methods (excluding `xenLogin`) return a regular **axios** response/error promise and only resolves if the user is **authenticated**.
 
 #### Login
 method `xenLogin` by default resolves an array with **logged in cookies**, to return a JSON string set `json` parameter to `true` 
@@ -45,8 +45,6 @@ When using then, you will receive the response as follows:`
     })
     .catch((err) => console.log(err));
 ```
-
-All method only resolves if the user is authenticated.
 
 #### Forum Requests
 Before sending any request to the forum, use `checkLogin` method to set **cookies**, **CSRF token** and check if is **authenticated**. 
