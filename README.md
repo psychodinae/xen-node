@@ -26,8 +26,10 @@ Passing optional settings:
       });
 ```
 
+All methods (excluding `xenLogin`) return a regular axios response/error promise.
+
 #### Login
-method `xenLogin` by default returns an array with **logged in cookies**, to return a JSON string set `json` parameter to `true` 
+method `xenLogin` by default resolves an array with **logged in cookies**, to return a JSON string set `json` parameter to `true` 
 in order to save to your environment variables or file.
 
 When using then, you will receive the response as follows:`
@@ -44,18 +46,18 @@ When using then, you will receive the response as follows:`
     .catch((err) => console.log(err));
 ```
 
-#### Forum Requests
-Before sending any request to the forum, use `checkLogin` method to set **cookies**, **CSRF token** and check if is **authenticated**.
+All method only resolves if the user is authenticated.
 
-`checkLogin` method return a regular axios resolve/reject object with a custom bollean `loggedIn` parameter.
+#### Forum Requests
+Before sending any request to the forum, use `checkLogin` method to set **cookies**, **CSRF token** and check if is **authenticated**. 
 
 Then using your previously saved cookies:
 
 ```javascript
-   const loggedCookies = JSON.parse(mySavedCookies)
+   const loggedCookies = JSON.parse(mySavedCookies) //to array
    req.checkLogin(loggedCookies)
      .then((resp) => {
-       resp.loggedIn; // true
+       resp.status; // 200
        resp.data; // axios data html response from server.
        // your requests here
    })

@@ -12,12 +12,6 @@ const defaultOpt = {
 };
 
 module.exports = class XenNode {
-  /**
-   * Interact with xenforo 2.x forums.
-   * @constructor
-   * @param {string} url - The forum base URL.
-   * @param {object} options - Object with optional configuration.
-   */
   constructor(url, options) {
     if (typeof url === "undefined")
       throw new TypeError("forum url is required!");
@@ -32,18 +26,6 @@ module.exports = class XenNode {
     });
   }
 
-  verbosity(message) {
-    if (typeof this.options.verbose === "function")
-      this.options.verbose(message);
-  }
-
-  /**
-   * Forum Login .
-   * @param {string} login - forum login.
-   * @param {string} password - Forum password.
-   * @param {boolean} json - Optional output format selector.
-   * @return {Array<string>|string} Array or a JSON string with cookies.
-   */
   xenLogin(login, password, json = false) {
     let params = {
       login: login,
@@ -64,20 +46,14 @@ module.exports = class XenNode {
           return status == 303; // Resolve only if the status code is 303, this means successfully logged in.
         },
       }).then((response) => {
-        this.verbosity("[!] successfully logged in.");
+        verbosity(this.options.verbose, "[!] successfully logged in.");
         this.cookies = response.headers["set-cookie"];
         return json ? JSON.stringify(this.cookies) : this.cookies;
       });
     });
   }
 
-  /**
-   * Set cookies, XFtoken and check if is logged in.
-   * @param {Array<string>} freshCookies - the logged cookie array.
-   * @return {object} A regular axios resolve/reject object with a custom loggedIn = true boolean parameter,
-   * in case of login error returns a custom "axios" error object with a loggedIn = false boolean parameter.
-   */
-  checkLogin(freshCookies) {
+  checkLogin(freshCookies = null) {
     this.postData = {}; // clear
     if (!Array.isArray(freshCookies)) freshCookies = this.cookies;
     return this.axiosXen({
@@ -93,18 +69,12 @@ module.exports = class XenNode {
         const $ = cheerio.load(res.data);
         const logged = $("#XF").attr("data-logged-in");
         this.postData._xfToken = $("input[name=_xfToken]").val();
-        res.loggedIn = true;
-        this.verbosity("[!] check login: true");
+        verbosity(this.options.verbose, `[!] check login: ${logged}`);
         return logged === "true" ? res : Promise.reject(notLoggedInError(res)); // reject Promise with custom error.
       });
     });
   }
 
-  /**
-   * Perform a axios regular GET request with authenticated cookies.
-   * @param {string} uri - relative URL.
-   * @return {object} A regular axios resolve/reject object.
-   */
   getRequest(uri) {
     return this.axiosXen(uri, {
       headers: {
@@ -113,13 +83,6 @@ module.exports = class XenNode {
     });
   }
 
-  /**
-   * Perform a axios POST request with authenticated cookies.
-   * @param {string} uri - relative URL.
-   * @param {object} data - a object to urlencoding to pass as data on POST request.
-   * @param {string} log - verbosity log message.
-   * @return {object} A regular axios resolve/reject object.
-   */
   postRequest(uri, data, log) {
     return this.axiosXen(uri, {
       method: "post",
@@ -134,17 +97,11 @@ module.exports = class XenNode {
         Cookie: this.cookies,
       },
     }).then((res) => {
-      this.verbosity(log);
-      return res;
+      verbosity(this.options.verbose, log);
+      return  Promise.resolve(res)
     });
   }
 
-  /**
-   * React on a post.
-   * @param {string} reactId - react Id.
-   * @param {string} postId - post Id.
-   * @return {object} A regular axios resolve/reject object.
-   */
   react(reactId, postId) {
     this.postData.reaction_id = reactId;
     const uri = `index.php?posts/${postId}/react`;
@@ -152,12 +109,6 @@ module.exports = class XenNode {
     return this.postRequest(uri, this.postData, log);
   }
 
-  /**
-   * Post in the thread.
-   * @param {string} text - message to post.
-   * @param {string} thread - thread Id.
-   * @return {object} A regular axios resolve/reject object.
-   */
   post(text, thread) {
     this.postData.message = text;
     const uri = `index.php?threads/${thread}/add-reply`;
@@ -165,12 +116,6 @@ module.exports = class XenNode {
     return this.postRequest(uri, this.postData, log);
   }
 
-  /**
-   * Edit a post.
-   * @param {string} text - message to post.
-   * @param {string} postId - post Id.
-   * @return {object} A regular axios resolve/reject object.
-   */
   editPost(text, postId) {
     this.postData.message = text;
     const uri = `index.php?posts/${postId}/edit`;
@@ -178,14 +123,6 @@ module.exports = class XenNode {
     return this.postRequest(uri, this.postData, log);
   }
 
-  /**
-   * Create a thread.
-   * @param {string} title - message title.
-   * @param {string} text - message to post.
-   *  @param {string} boardUri - board relative URL.
-   * @param {string} prefixId - thread prefix id.
-   * @return {object} A regular axios resolve/reject object.
-   */
   newThread(title, text, boardUri, prefixId = "0") {
     const data = {
       ...{
@@ -200,14 +137,6 @@ module.exports = class XenNode {
     return this.postRequest(uri, data, log);
   }
 
-  /**
-   * Edit a thread.
-   * @param {string} title - message title.
-   * @param {string} text - message to post.
-   * @param {string} postId - post Id.
-   * @param {string} prefixId - thread prefix id.
-   * @return {object} A regular axios resolve/reject object.
-   */
   editThread(title, text, postId, prefixId = "0") {
     const data = {
       ...{
@@ -222,13 +151,6 @@ module.exports = class XenNode {
     return this.postRequest(uri, data, log);
   }
 
-  /**
-   * Send private message.
-   * @param {string} title - message title.
-   * @param {string} text - message to post.
-   * @param {string|Array<string>} nickList - Username or list of recipients.
-   * @return {object} A regular axios resolve/reject object.
-   */
   privateMsg(title, text, nickList) {
     const nickStr = nickList.join();
     const data = {
@@ -244,24 +166,13 @@ module.exports = class XenNode {
     return this.postRequest(uri, data, log);
   }
 
-  /**
-   * Reply private message.
-   * @param {string} text - message to post.
-   * @param {string} messageId - message Id.
-   * @return {object} A regular axios resolve/reject object.
-   */
   replyPrivateMsg(text, messageId) {
     this.postData.message = text;
     const uri = `index.php?conversations/${messageId}/add-reply`;
     const log = `[!] private message replyed: ${messageId}`;
     return this.postRequest(uri, this.postData, log);
   }
-  /**
-   * Leave private message.
-   * @param {string} messageId - message Id.
-   * @param {boolean} acceptFutureMsg - accept future messages ( default true ).
-   * @return {object} A regular axios resolve/reject object.
-   */
+
   leavePrivateMsg(messageId, acceptFutureMsg = true) {
     let futureMsg = acceptFutureMsg ? "deleted" : "deleted_ignored";
     this.postData.recipient_state = futureMsg;
@@ -270,34 +181,18 @@ module.exports = class XenNode {
     return this.postRequest(uri, this.postData, log);
   }
 
-  /**
-   * Ignore user.
-   * @param {string} memberId - user Id.
-   * @return {object} A regular axios resolve/reject object.
-   */
   ignore(memberId) {
     const uri = `index.php?members/${memberId}/ignore`;
     const log = `[!] ignoring member: ${memberId}`;
     return this.postRequest(uri, this.postData, log);
   }
 
-  /**
-   * Follow user.
-   * @param {string} memberId - user Id.
-   * @return {object} A regular axios resolve/reject object.
-   */
   follow(memberId) {
     const uri = `index.php?members/${memberId}/follow`;
     const log = `[!] following member: ${memberId}`;
     return this.postRequest(uri, this.postData, log);
   }
 
-  /**
-   * Post in a user profile.
-   * @param {string} text - message to post.
-   * @param {string} memberId - user Id.
-   * @return {object} A regular axios resolve/reject object.
-   */
   profilePost(text, memberId) {
     this.postData.message = text;
     const uri = `index.php?members/${memberId}/post`;
@@ -305,12 +200,6 @@ module.exports = class XenNode {
     return this.postRequest(uri, this.postData, log);
   }
 
-  /**
-   * Edit post in a user profile.
-   * @param {string} text - message to post.
-   * @param {string} ProfilePostId - profile post Id.
-   * @return {object} A regular axios resolve/reject object.
-   */
   editProfilePost(text, ProfilePostId) {
     this.postData.message = text;
     const uri = `index.php?profile-posts/${ProfilePostId}/edit`;
@@ -318,27 +207,14 @@ module.exports = class XenNode {
     return this.postRequest(uri, this.postData, log);
   }
 
-  /**
-   * Delete post in a user profile.
-   * @param {string} ProfilePostId - profile post Id.
-   * @param {string} reason - a optional reason to delete.
-   * @return {object} A regular axios resolve/reject object.
-   */
-  deleteProfilePost(ProfilePostId, reason) {
+  deleteProfilePost(ProfilePostId, reason = "") {
     this.postData.reason = reason;
     const uri = `index.php?profile-posts/${ProfilePostId}/delete`;
     const log = `[!] profile post deleted: ${ProfilePostId}`;
     return this.postRequest(uri, this.postData, log);
   }
 
-  /**
-   * Bookmark a post.
-   * @param {string} postId - profile post Id.
-   * @param {string} message - a optional anottation.
-   * @param {string} labelse - a optional label.
-   * @return {object} A regular axios resolve/reject object.
-   */
-  bookMark(postId, message, labels) {
+  bookMark(postId, message = "", labels = "") {
     const label = labels ? labels.join() : null;
     const data = {
       ...{
@@ -352,17 +228,16 @@ module.exports = class XenNode {
     return this.postRequest(uri, data, log);
   }
 
-  /**
-   * Edit a profile signature.
-   * @param {string} text - signature message.
-   * @return {object} A regular axios resolve/reject object.
-   */
   signature(text) {
     this.postData.signature = text;
     const uri = `index.php?account/signature`;
     const log = `[!] signature edited.`;
     return this.postRequest(uri, this.postData, log);
   }
+};
+
+const verbosity = function (fn, message) {
+  if (typeof fn === "function") fn(message);
 };
 
 const mergeCookies = (c1, c2) => {
@@ -381,7 +256,6 @@ const notLoggedInError = (axiosResponse) => {
     config: axiosResponse.config,
     response: undefined,
     isAxiosError: false,
-    loggedIn: false,
   };
   return { ...new Error("not logged in."), ...custom };
 };
