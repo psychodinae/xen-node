@@ -16,7 +16,7 @@ First instantiate the object and pass the forum url:
 ```
 Passing optional settings:
 ```javascript
-    const req = new Interage("https://forum.some.com", {
+    const req = new XenNode("https://forum.some.com", {
       verbose: console.log,
       timeout: 5000,
       headers: {
