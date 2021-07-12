@@ -15,6 +15,17 @@
     "type": "git",
     "url": "git+https://github.com/psychodinae/xen-node.git"
   },
+  "keywords": [
+    "xenforo",
+    "forum",
+    "node",
+    "automation",
+    "package",
+    "api",
+    "bot",
+    "crawling",
+    "scraper"
+  ],
   "author": "psychodinae/mellon_collie",
   "license": "ISC",
   "bugs": {
